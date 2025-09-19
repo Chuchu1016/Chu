@@ -25,22 +25,36 @@
     .icon-btn{ display:inline-flex; align-items:center; justify-content:center; padding:0; }
     .icon-btn svg{ width:18px; height:18px; stroke:#fff; }
 
-    /* PDF 外層 */
+    /* PDF 外層（灰底，與工具列無縫銜接） */
     .canvas-shell{
       background:var(--bg);
       padding:20px;
       max-height:800px; /* 高度上限 */
       overflow:auto;
       margin-top:0;
-      border:0;
     }
 
-    /* 全域捲軸樣式 */
-    html, body, .canvas-shell { scrollbar-color:#aaa var(--bg); scrollbar-width:thin; }
-    html::-webkit-scrollbar, body::-webkit-scrollbar, .canvas-shell::-webkit-scrollbar { width:12px; }
-    html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, .canvas-shell::-webkit-scrollbar-track { background:var(--bg); }
-    html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, .canvas-shell::-webkit-scrollbar-thumb {
-      background-color:#aaa; border-radius:6px; border:3px solid var(--bg);
+    /* 全域捲軸樣式 (確保所有瀏覽器都吃到) */
+    html, body, .canvas-shell {
+      scrollbar-color: #aaa var(--bg); /* Firefox */
+      scrollbar-width: thin;
+    }
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    .canvas-shell::-webkit-scrollbar {
+      width: 12px;
+    }
+    html::-webkit-scrollbar-track,
+    body::-webkit-scrollbar-track,
+    .canvas-shell::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    html::-webkit-scrollbar-thumb,
+    body::-webkit-scrollbar-thumb,
+    .canvas-shell::-webkit-scrollbar-thumb {
+      background-color: #aaa;
+      border-radius: 6px;
+      border: 3px solid var(--bg);
     }
 
     /* PDF 畫面 */
@@ -72,21 +86,20 @@
     </div>
   </div>
 
-  <!-- PDF.js 主程式（CDN 可） -->
+  <!-- PDF.js -->
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
-    /* ⭐ 重要：使用同資料夾的 worker，避免跨網域/CSP 問題 */
-    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+    const PDF_URL = "https://chuchu1016.github.io/Chu/CHU%20resume.pdf";
 
-    /* PDF 路徑：使用相對網址，避免改 repo 名時失效 */
-    const PDF_URL = new URL('./CHU%20resume.pdf', location).href;
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
 
-    const canvas = document.getElementById('pdfCanvas');
-    const ctx = canvas.getContext('2d');
-    const zoomInBtn = document.getElementById('zoomInBtn');
-    const zoomOutBtn = document.getElementById('zoomOutBtn');
-    const resetZoomBtn = document.getElementById('resetZoomBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
+    const canvas = document.getElementById("pdfCanvas");
+    const ctx = canvas.getContext("2d");
+    const zoomInBtn = document.getElementById("zoomInBtn");
+    const zoomOutBtn = document.getElementById("zoomOutBtn");
+    const resetZoomBtn = document.getElementById("resetZoomBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
 
     let pdfDoc = null;
     let currentPage = 1;
@@ -97,9 +110,6 @@
     pdfjsLib.getDocument(PDF_URL).promise.then(doc => {
       pdfDoc = doc;
       renderPage(currentPage);
-    }).catch(err => {
-      console.error(err);
-      alert('PDF 載入失敗，請確認檔案路徑與公開權限。');
     });
 
     function renderPage(num){
@@ -111,11 +121,12 @@
       });
     }
 
-    zoomInBtn.addEventListener('click', () => { scale = Math.min(scale + 0.1, 5); renderPage(currentPage); });
-    zoomOutBtn.addEventListener('click', () => { scale = Math.max(scale - 0.1, 0.2); renderPage(currentPage); });
-    resetZoomBtn.addEventListener('click', () => { scale = 1.0; renderPage(currentPage); });
+    zoomInBtn.addEventListener("click", () => { scale = Math.min(scale + 0.1, 5); renderPage(currentPage); });
+    zoomOutBtn.addEventListener("click", () => { scale = Math.max(scale - 0.1, 0.2); renderPage(currentPage); });
+    resetZoomBtn.addEventListener("click", () => { scale = 1.0; renderPage(currentPage); });
 
-    window.addEventListener('resize', () => renderPage(currentPage));
+    window.addEventListener("resize", () => renderPage(currentPage));
   </script>
 </body>
 </html>
+
