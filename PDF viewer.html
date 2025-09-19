@@ -91,8 +91,8 @@
   <script>
     const PDF_URL = "https://chuchu1016.github.io/Chu/CHU%20resume.pdf";
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    // ⭐ 改成同資料夾的 worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
 
     const canvas = document.getElementById("pdfCanvas");
     const ctx = canvas.getContext("2d");
@@ -129,4 +129,5 @@
   </script>
 </body>
 </html>
+
 
