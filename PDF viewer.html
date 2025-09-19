@@ -10,37 +10,54 @@
     body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Arial; background:#fff; color:var(--text); }
     .wrap { max-width:1100px; margin:0 auto; }
 
+    /* 工具列（置中、深色） */
     .toolbar{
       display:flex; justify-content:center; align-items:center; gap:10px;
       padding:10px 12px; background:var(--bar); color:var(--text);
       border:0;
     }
-    .btn, .icon-btn, .zoom-input{
-      height:36px; min-width:36px;
+    .btn, .icon-btn{
+      height:36px; min-width:36px; padding:0 12px;
       border:0; background:transparent; color:var(--text);
-      font-size:14px; line-height:34px;
+      cursor:pointer; font-size:14px; line-height:34px;
     }
-    .btn{ padding:0 12px; cursor:pointer; }
     .btn:hover, .icon-btn:hover{ background:rgba(255,255,255,0.08); }
-    .icon-btn{ display:inline-flex; align-items:center; justify-content:center; padding:0; cursor:pointer; }
+    .icon-btn{ display:inline-flex; align-items:center; justify-content:center; padding:0; }
     .icon-btn svg{ width:18px; height:18px; stroke:#fff; }
-    .zoom-input{
-      width:60px; text-align:center;
-      background:#444; color:#fff; border-radius:4px;
-    }
+
+    /* PDF 外層（灰底，與工具列無縫銜接） */
     .canvas-shell{
       background:var(--bg);
       padding:20px;
-      max-height:800px;
+      max-height:800px; /* 高度上限 */
       overflow:auto;
       margin-top:0;
     }
-    .canvas-shell::-webkit-scrollbar { width:12px; }
-    .canvas-shell::-webkit-scrollbar-track { background:var(--bg); }
-    .canvas-shell::-webkit-scrollbar-thumb {
-      background-color:#aaa; border-radius:6px; border:3px solid var(--bg);
+
+    /* 全域捲軸樣式 (確保所有瀏覽器都吃到) */
+    html, body, .canvas-shell {
+      scrollbar-color: #aaa var(--bg); /* Firefox */
+      scrollbar-width: thin;
     }
-    .canvas-shell{ scrollbar-color:#aaa var(--bg); scrollbar-width:thin; }
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    .canvas-shell::-webkit-scrollbar {
+      width: 12px;
+    }
+    html::-webkit-scrollbar-track,
+    body::-webkit-scrollbar-track,
+    .canvas-shell::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    html::-webkit-scrollbar-thumb,
+    body::-webkit-scrollbar-thumb,
+    .canvas-shell::-webkit-scrollbar-thumb {
+      background-color: #aaa;
+      border-radius: 6px;
+      border: 3px solid var(--bg);
+    }
+
+    /* PDF 畫面 */
     canvas{
       display:block; margin:0 auto; background:#fff;
       box-shadow:0 4px 12px rgba(0,0,0,0.2);
@@ -49,11 +66,11 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- 工具列：－ 輸入框 ＋ 下載 -->
+    <!-- 工具列：－ 100% ＋ 下載 -->
     <div class="toolbar">
       <button id="zoomOutBtn" class="btn" title="縮小">－</button>
-      <input id="zoomInput" class="zoom-input" type="number" value="100" min="20" max="500" />%
-      <button id="zoomInBtn" class="btn" title="放大">＋</button>
+      <button id="resetZoomBtn" class="btn" title="重設為 100%">100%</button>
+      <button id="zoomInBtn"  class="btn" title="放大">＋</button>
 
       <a id="downloadBtn" class="icon-btn" title="下載" target="_blank" rel="noopener" aria-label="下載">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -69,6 +86,7 @@
     </div>
   </div>
 
+  <!-- PDF.js -->
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
     const PDF_URL = "https://chuchu1016.github.io/Chu-pdf/CHU%20resume.pdf";
@@ -80,7 +98,7 @@
     const ctx = canvas.getContext("2d");
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
-    const zoomInput = document.getElementById("zoomInput");
+    const resetZoomBtn = document.getElementById("resetZoomBtn");
     const downloadBtn = document.getElementById("downloadBtn");
 
     let pdfDoc = null;
@@ -100,21 +118,12 @@
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         page.render({ canvasContext: ctx, viewport });
-        zoomInput.value = Math.round(scale*100);
       });
     }
 
-    zoomInBtn.addEventListener("click", () => { scale = Math.min(scale+0.1, 5); renderPage(currentPage); });
-    zoomOutBtn.addEventListener("click", () => { scale = Math.max(scale-0.1, 0.2); renderPage(currentPage); });
-
-    // 使用者輸入比例
-    zoomInput.addEventListener("change", () => {
-      let val = parseInt(zoomInput.value, 10);
-      if(isNaN(val)) val = scale*100;
-      val = Math.min(Math.max(val, 20), 500); // 限制20%-500%
-      scale = val/100;
-      renderPage(currentPage);
-    });
+    zoomInBtn.addEventListener("click", () => { scale = Math.min(scale + 0.1, 5); renderPage(currentPage); });
+    zoomOutBtn.addEventListener("click", () => { scale = Math.max(scale - 0.1, 0.2); renderPage(currentPage); });
+    resetZoomBtn.addEventListener("click", () => { scale = 1.0; renderPage(currentPage); });
 
     window.addEventListener("resize", () => renderPage(currentPage));
   </script>
