@@ -3,47 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>我的 PDF Viewer</title>
+  <title>PDF Viewer</title>
   <style>
     :root { --bg:#f9f9f9; --bd:#e5e5e5; --text:#222; --accent:#0d6efd; }
+    * { box-sizing: border-box; }
     body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Arial; color:var(--text); background:#fff; }
     .wrap { max-width:1100px; margin:0 auto; padding:16px; }
     .toolbar {
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-      padding:10px; background:var(--bg); border:1px solid var(--bd); border-radius:10px;
+      display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:10px; background:var(--bg); border:1px solid var(--bd);
       position:sticky; top:0; z-index:5;
     }
-    .toolbar button, .toolbar input, .toolbar a {
-      height:34px; padding:0 10px; border:1px solid var(--bd); border-radius:8px; background:#fff;
-      font-size:14px; line-height:32px; cursor:pointer; text-decoration:none; color:inherit;
+    .btn, .icon-btn {
+      height:36px; min-width:36px; padding:0 12px;
+      border:1px solid var(--bd); background:#fff; color:inherit; cursor:pointer;
+      font-size:14px; line-height:34px;
+      /* 無圓角 */
+      border-radius:0;
     }
-    .toolbar button:hover, .toolbar a:hover { background:#f1f1f1; }
-    .toolbar .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
-    .toolbar .primary:hover { filter:brightness(0.95); }
-    .toolbar .sep { width:1px; height:24px; background:var(--bd); margin:0 4px; }
-    .pager { display:flex; align-items:center; gap:6px; }
-    .pager input { width:64px; text-align:center; }
-    .canvas-shell { margin-top:12px; border:1px solid var(--bd); border-radius:10px; overflow:auto; background:#fff; }
+    .btn:hover, .icon-btn:hover { background:#f1f1f1; }
+    .icon-btn { display:inline-flex; align-items:center; justify-content:center; padding:0; }
+    .icon-btn svg { width:18px; height:18px; }
+    .canvas-shell { margin-top:12px; border:1px solid var(--bd); /* 無圓角 */ border-radius:0; overflow:auto; background:#fff; }
     canvas { display:block; margin:0 auto; background:#fff; }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <!-- 置中的精簡工具列：縮小 / 放大 / 100% / 下載(圖示) -->
     <div class="toolbar">
-      <div class="pager">
-        <button id="prevBtn" title="上一頁">◀</button>
-        <input id="pageInput" type="number" min="1" value="1" />
-        <span id="pageCount">/ 1</span>
-        <button id="nextBtn" title="下一頁">▶</button>
-      </div>
+      <button id="zoomOutBtn" class="btn" title="縮小">－</button>
+      <button id="zoomInBtn" class="btn" title="放大">＋</button>
+      <button id="resetZoomBtn" class="btn" title="重設為 100%">100%</button>
 
-      <span class="sep"></span>
-
-      <button id="zoomOutBtn" title="縮小">－</button>
-      <button id="zoomInBtn" title="放大">＋</button>
-      <button id="resetZoomBtn" title="100%">100%</button>
-
-      <a id="downloadBtn" class="primary" target="_blank" rel="noopener">⬇ 下載</a>
+      <a id="downloadBtn" class="icon-btn" title="下載" target="_blank" rel="noopener" aria-label="下載">
+        <!-- Download SVG icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </a>
     </div>
 
     <div class="canvas-shell">
@@ -54,7 +55,7 @@
   <!-- PDF.js -->
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
-    // 設定 PDF 檔案網址 (改成你 GitHub Pages 上的 PDF)
+    // 改成你的 PDF 直連網址（目前用你的 GitHub Pages 檔案）
     const PDF_URL = "https://chuchu1016.github.io/Chu-pdf/CHU%20resume.pdf";
 
     pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -62,26 +63,23 @@
 
     const canvas = document.getElementById("pdfCanvas");
     const ctx = canvas.getContext("2d");
-    const pageInput = document.getElementById("pageInput");
-    const pageCountSpan = document.getElementById("pageCount");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
     const resetZoomBtn = document.getElementById("resetZoomBtn");
     const downloadBtn = document.getElementById("downloadBtn");
 
     let pdfDoc = null;
-    let currentPage = 1;
+    let currentPage = 1; // 只有一頁也 OK
     let scale = 1.0;
 
     downloadBtn.href = PDF_URL;
 
     pdfjsLib.getDocument(PDF_URL).promise.then(doc => {
       pdfDoc = doc;
-      pageCountSpan.textContent = `/ ${pdfDoc.numPages}`;
-      pageInput.max = pdfDoc.numPages;
       renderPage(currentPage);
+    }).catch(err => {
+      console.error(err);
+      alert("PDF 載入失敗，請確認網址是否可公開存取。");
     });
 
     function renderPage(num) {
@@ -90,32 +88,26 @@
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         page.render({ canvasContext: ctx, viewport });
-        pageInput.value = String(num);
-        updateNavButtons();
       });
     }
 
-    function updateNavButtons() {
-      prevBtn.disabled = currentPage <= 1;
-      nextBtn.disabled = currentPage >= pdfDoc.numPages;
-    }
-
-    prevBtn.addEventListener("click", () => {
-      if (currentPage > 1) { currentPage--; renderPage(currentPage); }
-    });
-    nextBtn.addEventListener("click", () => {
-      if (currentPage < pdfDoc.numPages) { currentPage++; renderPage(currentPage); }
-    });
-    pageInput.addEventListener("change", () => {
-      let val = parseInt(pageInput.value, 10);
-      if (isNaN(val)) val = currentPage;
-      val = Math.min(Math.max(1, val), pdfDoc.numPages);
-      currentPage = val;
+    zoomInBtn.addEventListener("click", () => {
+      scale = Math.min(scale + 0.1, 5);
       renderPage(currentPage);
     });
-    zoomInBtn.addEventListener("click", () => { scale = Math.min(scale + 0.1, 5); renderPage(currentPage); });
-    zoomOutBtn.addEventListener("click", () => { scale = Math.max(scale - 0.1, 0.2); renderPage(currentPage); });
-    resetZoomBtn.addEventListener("click", () => { scale = 1.0; renderPage(currentPage); });
+
+    zoomOutBtn.addEventListener("click", () => {
+      scale = Math.max(scale - 0.1, 0.2);
+      renderPage(currentPage);
+    });
+
+    resetZoomBtn.addEventListener("click", () => {
+      scale = 1.0;
+      renderPage(currentPage);
+    });
+
+    // 視窗大小改變時重新繪製（簡易處理）
+    window.addEventListener("resize", () => renderPage(currentPage));
   </script>
 </body>
 </html>
