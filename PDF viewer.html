@@ -10,7 +10,7 @@
     body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Arial; background:#fff; color:var(--text); }
     .wrap { max-width:1100px; margin:0 auto; }
 
-    /* 工具列（置中、深色） */
+    /* 工具列（置中、深色、無邊框） */
     .toolbar{
       display:flex; justify-content:center; align-items:center; gap:10px;
       padding:10px 12px; background:var(--bar); color:var(--text);
@@ -19,45 +19,31 @@
     .btn, .icon-btn{
       height:36px; min-width:36px; padding:0 12px;
       border:0; background:transparent; color:var(--text);
-      cursor:pointer; font-size:14px; line-height:34px;
+      cursor:pointer; font-size:14px; line-height:34px; border-radius:0;
     }
     .btn:hover, .icon-btn:hover{ background:rgba(255,255,255,0.08); }
     .icon-btn{ display:inline-flex; align-items:center; justify-content:center; padding:0; }
     .icon-btn svg{ width:18px; height:18px; stroke:#fff; }
 
-    /* PDF 外層（灰底，與工具列無縫銜接） */
+    /* PDF 容器（灰底、與工具列無縫、限制高度） */
     .canvas-shell{
       background:var(--bg);
       padding:20px;
-      max-height:800px; /* 高度上限 */
-      overflow:auto;
-      margin-top:0;
+      max-height:800px;   /* 高度上限 */
+      overflow:auto;      /* 超出出現捲軸 */
+      margin-top:0;       /* 與工具列無空隙 */
+      border:0;
     }
 
-    /* 全域捲軸樣式 (確保所有瀏覽器都吃到) */
-    html, body, .canvas-shell {
-      scrollbar-color: #aaa var(--bg); /* Firefox */
-      scrollbar-width: thin;
-    }
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar,
-    .canvas-shell::-webkit-scrollbar {
-      width: 12px;
-    }
-    html::-webkit-scrollbar-track,
-    body::-webkit-scrollbar-track,
-    .canvas-shell::-webkit-scrollbar-track {
-      background: var(--bg);
-    }
-    html::-webkit-scrollbar-thumb,
-    body::-webkit-scrollbar-thumb,
-    .canvas-shell::-webkit-scrollbar-thumb {
-      background-color: #aaa;
-      border-radius: 6px;
-      border: 3px solid var(--bg);
+    /* 全域捲軸樣式（確保不同瀏覽器一致） */
+    html, body, .canvas-shell { scrollbar-color:#aaa var(--bg); scrollbar-width:thin; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar, .canvas-shell::-webkit-scrollbar { width:12px; }
+    html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, .canvas-shell::-webkit-scrollbar-track { background:var(--bg); }
+    html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, .canvas-shell::-webkit-scrollbar-thumb {
+      background-color:#aaa; border-radius:6px; border:3px solid var(--bg);
     }
 
-    /* PDF 畫面 */
+    /* PDF 畫面（白底＋陰影） */
     canvas{
       display:block; margin:0 auto; background:#fff;
       box-shadow:0 4px 12px rgba(0,0,0,0.2);
@@ -86,20 +72,21 @@
     </div>
   </div>
 
-  <!-- PDF.js -->
+  <!-- PDF.js 主程式（CDN 可） -->
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
-    const PDF_URL = "https://chuchu1016.github.io/Chu/CHU%20resume.pdf";
+    /* ⭐ 重要：使用同資料夾的 worker（請確保已上傳 pdf.worker.min.js 與本檔同一層） */
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    /* PDF 路徑：使用相對網址，避免改 repo 名時失效（檔名含空白已用 %20） */
+    const PDF_URL = new URL('./CHU%20resume.pdf', location).href;
 
-    const canvas = document.getElementById("pdfCanvas");
-    const ctx = canvas.getContext("2d");
-    const zoomInBtn = document.getElementById("zoomInBtn");
-    const zoomOutBtn = document.getElementById("zoomOutBtn");
-    const resetZoomBtn = document.getElementById("resetZoomBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas.getContext('2d');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetZoomBtn = document.getElementById('resetZoomBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
 
     let pdfDoc = null;
     let currentPage = 1;
@@ -110,6 +97,9 @@
     pdfjsLib.getDocument(PDF_URL).promise.then(doc => {
       pdfDoc = doc;
       renderPage(currentPage);
+    }).catch(err => {
+      console.error(err);
+      alert('PDF 載入失敗，請確認檔案路徑與公開權限。');
     });
 
     function renderPage(num){
@@ -121,12 +111,11 @@
       });
     }
 
-    zoomInBtn.addEventListener("click", () => { scale = Math.min(scale + 0.1, 5); renderPage(currentPage); });
-    zoomOutBtn.addEventListener("click", () => { scale = Math.max(scale - 0.1, 0.2); renderPage(currentPage); });
-    resetZoomBtn.addEventListener("click", () => { scale = 1.0; renderPage(currentPage); });
+    zoomInBtn.addEventListener('click', () => { scale = Math.min(scale + 0.1, 5); renderPage(currentPage); });
+    zoomOutBtn.addEventListener('click', () => { scale = Math.max(scale - 0.1, 0.2); renderPage(currentPage); });
+    resetZoomBtn.addEventListener('click', () => { scale = 1.0; renderPage(currentPage); });
 
-    window.addEventListener("resize", () => renderPage(currentPage));
+    window.addEventListener('resize', () => renderPage(currentPage));
   </script>
 </body>
 </html>
-
