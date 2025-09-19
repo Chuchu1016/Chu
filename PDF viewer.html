@@ -9,6 +9,8 @@
     * { box-sizing: border-box; }
     body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Arial; color:var(--text); background:#fff; }
     .wrap { max-width:1100px; margin:0 auto; padding:16px; }
+
+    /* 工具列 */
     .toolbar {
       display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;
       padding:10px; background:var(--bg); border:1px solid var(--bd);
@@ -16,21 +18,36 @@
     }
     .btn, .icon-btn {
       height:36px; min-width:36px; padding:0 12px;
-      border:1px solid var(--bd); background:#fff; color:inherit; cursor:pointer;
+      border:0; /* 無邊框 */
+      background:#fff; color:inherit; cursor:pointer;
       font-size:14px; line-height:34px;
-      /* 無圓角 */
-      border-radius:0;
+      border-radius:0; /* 無圓角 */
     }
     .btn:hover, .icon-btn:hover { background:#f1f1f1; }
     .icon-btn { display:inline-flex; align-items:center; justify-content:center; padding:0; }
     .icon-btn svg { width:18px; height:18px; }
-    .canvas-shell { margin-top:12px; border:1px solid var(--bd); /* 無圓角 */ border-radius:0; overflow:auto; background:#fff; }
-    canvas { display:block; margin:0 auto; background:#fff; }
+
+    /* PDF 容器 */
+    .canvas-shell {
+      margin-top:12px;
+      background:#D9D9D9; /* 灰色底色 */
+      padding:20px;
+      max-height:800px; /* 高度限制 */
+      overflow:auto;    /* 超出出現捲軸 */
+    }
+
+    /* PDF 頁面 */
+    canvas {
+      display:block;
+      margin:0 auto;
+      background:#fff; /* PDF 白底 */
+      box-shadow:0 4px 12px rgba(0,0,0,0.2); /* 陰影效果 */
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- 置中的精簡工具列：縮小 / 放大 / 100% / 下載(圖示) -->
+    <!-- 精簡工具列 -->
     <div class="toolbar">
       <button id="zoomOutBtn" class="btn" title="縮小">－</button>
       <button id="zoomInBtn" class="btn" title="放大">＋</button>
@@ -55,7 +72,7 @@
   <!-- PDF.js -->
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
-    // 改成你的 PDF 直連網址（目前用你的 GitHub Pages 檔案）
+    // 改成你的 PDF 直連網址
     const PDF_URL = "https://chuchu1016.github.io/Chu-pdf/CHU%20resume.pdf";
 
     pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -69,7 +86,7 @@
     const downloadBtn = document.getElementById("downloadBtn");
 
     let pdfDoc = null;
-    let currentPage = 1; // 只有一頁也 OK
+    let currentPage = 1;
     let scale = 1.0;
 
     downloadBtn.href = PDF_URL;
@@ -95,18 +112,15 @@
       scale = Math.min(scale + 0.1, 5);
       renderPage(currentPage);
     });
-
     zoomOutBtn.addEventListener("click", () => {
       scale = Math.max(scale - 0.1, 0.2);
       renderPage(currentPage);
     });
-
     resetZoomBtn.addEventListener("click", () => {
       scale = 1.0;
       renderPage(currentPage);
     });
 
-    // 視窗大小改變時重新繪製（簡易處理）
     window.addEventListener("resize", () => renderPage(currentPage));
   </script>
 </body>
